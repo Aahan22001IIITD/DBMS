@@ -1,0 +1,382 @@
+drop  database if exists dbms_project; 
+create database dbms_project;
+use dbms_project;
+
+create table admins (
+	admin_id int primary key auto_increment,
+	name varchar(50) not null,
+	email varchar(50) not null,
+	role varchar(50) not null,
+	phone_number char(10) not null unique,
+	password varchar(20) not null unique
+);
+
+alter table admins auto_increment=100;
+
+insert into admins (name,email,role,phone_number,password)
+values ("kartikeya","kartikeya22241@iiitd.ac.in","admin1","8888888888","1234"),
+	("aahan","aahan22001@iiitd.ac.in","admin2","8888888881","12345"),
+        ("ishita","ishita22224@iiitd.ac.in","admin3","8888888882","1233456"),
+        ("samridh","samridh22441@iiitd.ac.in","admin4","8888888883","1234567");
+
+
+create table delivery_agent (
+	agent_id int primary key auto_increment,
+	name varchar(50) not null,
+	vehicle_type varchar(50) not null,
+	admin_id int,
+	free bool default true,
+    check (free in (true,false)),
+	vehicle_number varchar(50) not null unique,
+    check (vehicle_type in ('car','bike','truck','scooter','van','bus','auto','cycle','jeep')),
+    foreign key(admin_id) references admins(admin_id) on
+    update cascade on delete cascade
+);
+
+alter table delivery_agent auto_increment=7232;
+
+insert into delivery_agent(name,vehicle_type,admin_id,free,vehicle_number)
+values ("aahan","bike",100,false,"LC73 LE1964"),
+	("priya", "bike", 100,false, "IU81 OP3756"),
+	("kabir", "car", 101,false, "YM84 LK5261"),
+	("ishaan", "truck",101,false, "RA30 AN2805"),
+	("tara", "scooter",102,false, "WH76 AG0572"),
+	("om", "van", 102,false, "GW11 DA6270"),
+	("anika", "bus", 103,false, "QS21 RG9018"),
+	("vihan", "auto", 103,false, "HK28 DF7079"),
+	("maya", "cycle", 100,false, "EM50 LM0082"),
+	("arjun", "jeep", 100,false, "CY10 TW6494");
+	
+	
+
+create table products (
+    product_id INT primary key auto_increment,
+    product_name varchar (50) not null,
+    category varchar (50) not null,
+    price decimal(7,2) default 0,
+    is_available bool default false,
+    check (is_available in (true,false)),
+    admin_id int,
+    quantity int not null,
+    measuring_type varchar(50) not null,
+    foreign key(admin_id) references admins(admin_id)
+);
+
+insert into products(product_name,category,price,is_available,admin_id,quantity,measuring_type)
+values ("Rice","grains_and_cereals",103,true,100,1,"kilogram"),
+	("wheat","grains_and_cereals",104,true,100,1,"kilogram"),
+        ("munchies","snacks",10,false,101,1,"unit"),
+        ("chocolate","sweets",60,true,101,1,"unit"),
+        ("toothbrush","personal _care",40,true,102,1,"unit"),
+        ("soap","personal_care",35,true,102,1,"unit"),
+        ("milk","diary",56,true,103,1,"litre"),
+        ("panner","diary",95,true,103,250,"grams"),
+        ("apple","fresh_fruits_and_vegetables",76,true,100,1,"kilogram"),
+        ("onion","fresh_fruits_and_vegetables",45,false,101,1,"kilogram");
+
+
+create table inventory (
+	
+    inventory_id int primary key auto_increment,
+    need_for_supply bool  default false,
+    check (need_for_supply in (true,false)),
+    Quantity decimal(20,2) default 0,
+    measuring_type varchar(50) not null,
+    admin_id int,
+    product_id int,
+    foreign key(admin_id) references admins(admin_id) on
+    update cascade,
+    foreign key(product_id) references products(product_id) on 
+    update cascade
+);
+
+alter table inventory auto_increment=1928;
+
+insert into inventory(need_for_supply,Quantity,measuring_type,admin_id,product_id)
+values(false,1000,"kilogram",100,1),
+	(false,1500,"kilogram",100,2),
+        (true,1000,"unit",101,3),
+        (false,1000,"unit",101,4),
+        (true,100,"unit",102,5),
+        (false,150,"unit",102,6),
+        (false,1000,"litre",103,7),
+        (false,10,"kilogram",103,8),
+        (false,50,"kilogram",100,9),
+        (false,70,"kilogram",101,10);
+
+
+create table supplier (
+	supplier_id int primary key auto_increment,
+	Quantity decimal(30,2) default 0,
+	measuring_type varchar(50) not null,
+    	product_id int,
+	admin_id int,
+    	inventory_id int,
+        foreign key(product_id) references products(product_id) on update cascade on delete cascade,
+        foreign key(admin_id) references admins(admin_id) on update cascade on delete cascade,
+        foreign key(inventory_id) references inventory(inventory_id) on update cascade on delete cascade
+);
+
+alter table supplier auto_increment=1000;
+
+insert into supplier(Quantity,measuring_type,product_id,admin_id,inventory_id)
+values (1000,"kilogram",1,100,1928),
+	(1500,"kilogram",2,100,1929),
+        (1000,"unit",3,101,1930),
+        (1000,"unit",4,101,1931),
+        (100,"unit",5,102,1932),
+        (150,"unit",6,102,1933),
+        (1000,"litre",7,103,1934),
+        (10,"kilogram",8,103,1935),
+        (50,"kilogram",9,100,1936),
+        (70,"kilogram",10,101,1937);
+
+
+
+create table cart(
+	cart_id int  primary key auto_increment,
+	product_quantity int default 0,
+	cost  decimal(8,2) not null,
+    product_id int,
+    foreign key(product_id) references products(product_id) on update cascade on delete set NULL
+);
+
+alter table cart auto_increment=300;
+
+insert into cart(product_id,product_quantity,cost)
+values (1,4,250),
+	(2,3,25),
+        (3,10,3432),
+        (4,12,2504),
+        (5,17,4000),
+        (6,2,223),
+        (7,7,234),
+        (8,8,1200),
+        (9,9,2500),
+        (10,13,500);
+
+
+create table discount_and_offers (
+	discount_id int primary key auto_increment,
+	description varchar(100),
+	discount_percentage decimal(5,2) not null,
+    	admin_id int,
+	constraint  check (discount_percentage<=100 and discount_percentage>0),
+    foreign key(admin_id) references admins(admin_id) on update cascade on delete cascade
+);
+
+alter table discount_and_offers auto_increment=400;
+
+insert into discount_and_offers(description,discount_percentage,admin_id)
+values ("30% off on whole cart",30,100),
+		("35% off on whole cart",35,100),
+        ("40% off on whole cart",40,101),
+        ("45% off on whole cart",45,101),
+        ("50% off on whole cart",50,102),
+        ("55% off on whole cart",55,102),
+        ("60% off on whole cart",60,103),
+        ("65% off on whole cart",65,103),
+        ("70% off on whole cart",70,101),
+        ("75% off on whole cart",75,102);
+        
+        
+        
+create table adds_discount(
+	is_active bool default false,
+    	admin_id int,
+    	discount_id int,
+	primary key(admin_id,discount_id),
+    foreign key(admin_id) references admins(admin_id),
+    foreign key(discount_id) references discount_and_offers(discount_id) on update cascade on delete cascade
+);
+
+insert into adds_discount
+values (true,100,400),
+	(true,100,401),
+        (false,101,402),
+        (true,101,403),
+        (true,102,404),
+        (true,102,405),
+        (false,103,406),
+        (true,103,407),
+        (true,100,408),
+        (false,101,409);
+
+
+create table transactions (
+	transactions_id int primary key auto_increment,
+	payment_method varchar(50) ,
+	transaction_date date not null,
+	transaction_time time not null,
+	amount decimal(8,2) not null
+  	check (amount>=0)
+);
+
+alter table transactions auto_increment=500;
+
+insert into transactions(payment_method,transaction_date,transaction_time,amount)
+values ("Net_banking",current_date(),current_time(),467),
+	("upi",current_date(),current_time(),4500),
+        ("credit_card",current_date(),current_time(),435),
+        ("debit_card",current_date(),current_time(),298),
+        ("Net_banking",current_date(),current_time(),673),
+        ("upi",current_date(),current_time(),560),
+        ("credit_card",current_date(),current_time(),2225),
+        ("debit_card",current_date(),current_time(),29),
+        ("debit_card",current_date(),current_time(),120),
+        ("debit_card",current_date(),current_time(),2221);
+
+
+create table orders (
+	order_id int primary key auto_increment,
+	order_date date not null,
+	order_time time not null,
+	order_statuss bool default false,
+	total_amount decimal(8,2) not null,
+    	cart_id int,
+    	discount_id int,
+    	transactions_id int,
+    	admin_id int,
+	agent_id int,
+	constraint var3 check (total_amount>=0),
+    foreign key(cart_id) references cart(cart_id),
+    foreign key(discount_id) references discount_and_offers(discount_id) on update cascade,
+    foreign key(transactions_id) references transactions(transactions_id) on update cascade ,
+    foreign key(admin_id) references admins(admin_id) on update cascade,
+    foreign key(agent_id) references delivery_agent(agent_id) on update cascade
+);
+
+alter table orders auto_increment=600;
+
+insert into orders(order_date,order_time,order_statuss,total_amount,cart_id,discount_id,transactions_id,admin_id,agent_id)
+values (current_date(),current_time(),true,123.35,300,400,500,100,7232),
+	(current_date(),current_time(),false,2343.23,301,401,501,100,7233),
+        (current_date(),current_time(),true,343.35,302,402,502,101,7234),
+        (current_date(),current_time(),false,4343.23,303,403,503,101,7235),
+        (current_date(),current_time(),true,35353.34,304,404,504,102,7236),
+        (current_date(),current_time(),false,3343.22,305,405,505,102,7237),
+        (current_date(),current_time(),true,5883.39,306,406,506,103,7238),
+        (current_date(),current_time(),false,899.32,307,407,507,103,7239),
+        (current_date(),current_time(),false,8339.33,308,408,508,100,7240),
+        (current_date(),current_time(),false,1243.23,309,409,509,101,7241);
+
+
+create table consists_of (
+	primary key(order_id,product_id,cart_id),
+    	order_id int,
+    	product_id int,
+    	cart_id int,
+	foreign key(order_id) references orders(order_id) on update cascade ,
+    foreign key(product_id) references products(product_id) on update cascade ,
+    foreign key(cart_id) references cart(cart_id) on delete cascade 
+);
+
+
+insert into consists_of
+values (600,1,300),
+	(601,2,301),
+        (602,3,302),
+        (603,4,303),
+        (604,5,304),
+        (605,6,305),
+        (606,7,306),
+        (607,8,307),
+        (608,9,308),
+        (609,10,309);
+        
+create table wallet (
+	wallet_id int primary key auto_increment,
+	balance decimal(10,2) default 0,
+	constraint var4 check (balance>=0)
+);
+
+
+
+alter table wallet auto_increment=800;
+
+insert into wallet(balance)
+values (20),
+	(345),
+        (567),
+        (789),
+        (23432),
+        (2342),
+        (5654),
+        (5654),
+        (974),
+        (2822);
+
+
+
+
+
+create table customers (
+	customer_id int primary key auto_increment,
+	name varchar(50) not null,
+	email varchar(50) not null,
+	password varchar(50) not null,
+	address varchar(70) not null,
+	phone_number char(10) not null,
+    	cart_id int,
+    	wallet_id int,
+	foreigncustomerscustomers key(cart_id) references cart(cart_id) on update cascade on delete cascade ,
+    foreign key(wallet_id) references wallet(wallet_id) on update cascade on delete cascade
+);
+
+alter table customers auto_increment=700;
+
+insert into customers(name,email,password,address,phone_number,cart_id,wallet_id)
+values ("kartikeya","example@gmail.com","1234","Dilshad Garden",8888888888,300,800),
+	("Aarav", "aarav@example.com", "pass123", "Green Park", 7777777777, 301, 801),
+	("Bhavna", "bhavna@example.net", "abcd1234", "Lajpat Nagar", 6666666666, 302, 802),
+	("Chetan", "chetan@example.org", "xyz789", "Rohini", 5555555555, 303, 803),
+	("Divya", "divya@example.com", "div123", "Pitampura", 4444444444, 304, 804),
+	("Esha", "esha@example.net", "esha456", "Janakpuri", 3333333333, 305, 805),
+	("Farhan", "farhan@example.org", "far789", "Vasant Kunj", 2222222222, 306, 806),
+	("Gauri", "gauri@example.com", "gauri123", "Saket", 1111111111, 307, 807),
+	("Himanshu", "himanshu@example.net", "himan456", "Dwarka", 9999999999, 308, 808),
+	("Isha", "isha@example.org", "isha789", "Mayur Vihar", 8888888888, 309, 809);
+
+
+
+
+
+
+create table place (
+	date_of_placing date not null,
+	time_of_placing time not null,
+    	customer_id int,
+    	order_id int,
+	primary key (customer_id,order_id),
+    foreign key(customer_id) references customers(customer_id) on update cascade ,
+    foreign key(order_id) references orders(order_id) on update cascade
+);
+
+insert into place
+values (current_date(),current_time(),700,600),
+	(current_date(),current_time(),701,601),
+        (current_date(),current_time(),702,602),
+        (current_date(),current_time(),703,603),
+        (current_date(),current_time(),704,604),
+        (current_date(),current_time(),705,605),
+        (current_date(),current_time(),706,606),
+        (current_date(),current_time(),707,607),
+        (current_date(),current_time(),708,608),
+        (current_date(),current_time(),709,609);
+        
+        
+        
+	SELECT * FROM adds_discount;
+    SELECT * FROM ADMINS;
+    SELECT * FROM consists_of;
+    SELECT * FROM CUSTOMERS;
+    SELECT * FROM delivery_agent;
+    SELECT * FROM discount_and_offers;
+    SELECT * FROM inventory;
+    SELECT * FROM ORDERS;
+    SELECT * FROM PLACE;
+    SELECT * FROM PRODUCTS;
+    SELECT * FROM SUPPLIER;
+    SELECT * FROM transactions;
+    SELECT * FROM WALLET
+    
