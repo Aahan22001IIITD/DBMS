@@ -91,8 +91,9 @@ def register():
     phone_entry = tk.Entry(register_window)
     phone_entry.grid(row=4, column=1, padx=5, pady=5)
 
-    # Register button
+    # Register button'
     def register_user():
+        
         # Retrieve data from the entry fields
         name = name_entry.get()
         email = email_entry.get()
