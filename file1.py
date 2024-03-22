@@ -93,7 +93,7 @@ def register():
 
     # Register button'
     def register_user():
-        
+
         # Retrieve data from the entry fields
         name = name_entry.get()
         email = email_entry.get()
@@ -103,7 +103,7 @@ def register():
 
         # Insert user data into the CUSTOMERS table
         insert_query = "INSERT INTO customers (customer_id,name, email, password, address, phone_number,cart_id, wallet_id) VALUES (%s, %s, %s, %s, %s)"
-        user_data = (name, email, password, address, phone_number,last_entry[6]+1,last_entry[7]+1)
+        user_data = (last_entry[0]+1,name, email, password, address, phone_number,last_entry[6]+1,last_entry[7]+1)
         cursor.execute(insert_query, user_data)
         cnx.commit()
 
