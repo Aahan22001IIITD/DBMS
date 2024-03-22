@@ -206,6 +206,7 @@ def open_product_selection_window(user_data):
 
     product_window.mainloop()
 def register():
+    login_window.destroy()
     register_window = tk.Tk()
     register_window.title("Register")
 
@@ -249,7 +250,8 @@ def register():
         cursor.execute(insert_query_wallet)
         cnx.commit()
         wallet_id = cursor.lastrowid
-        insert_query_cart = "INSERT INTO cart (product_id, product_quantity, cost) VALUES (-1, 0, 0)"
+        #for now 13 th product id is set as null product , which will be assigned to a newly registered user.
+        insert_query_cart = "INSERT INTO cart (product_id, product_quantity, cost) VALUES (13, 0, 0)"
         cursor.execute(insert_query_cart)
         cnx.commit()
         cart_id = cursor.lastrowid
@@ -291,6 +293,8 @@ def run():
 
     # User Login button
     tk.Button(login_window, text="User Login", command=login).grid(row=2, column=0, padx=5, pady=5)
+    
+    tk.Button(login_window, text="Register", command=register).grid(row=2, column=3, padx=5, pady=5)
 
     # Admin Login button
     tk.Button(login_window, text="Admin Login", command=admin_login).grid(row=2, column=1, padx=5, pady=5)
