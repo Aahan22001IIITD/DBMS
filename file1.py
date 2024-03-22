@@ -30,6 +30,7 @@ cart_data = cursor.fetchall()
 #     print(cart)
 last_entry = users_data[-1]
 def login():
+    login_window.destroy()
     register_window = tk.Tk()
     register_window.title("Login")
 
@@ -42,15 +43,42 @@ def login():
     password_label.grid(row=2, column=0, padx=5, pady=5)
     password_entry = tk.Entry(register_window, show="*")
     password_entry.grid(row=2, column=1, padx=5, pady=5)
-    email = email_entry.get()
-    password = password_entry.get()
     
-    for user_data in users_data:
-        if email == user_data[2] and password == user_data[3]:
-            login_window.destroy()
-            open_product_selection_window(user_data)
-            return
-    messagebox.showerror("Error", "Invalid email Id or password")
+    def func():
+        email = email_entry.get()
+        password = password_entry.get()
+        # print(email)
+        # print(password)
+        for user_data in users_data:
+            if email == user_data[2] and password == user_data[3]:
+                messagebox.showinfo("Login successful!")
+                register_window.destroy()
+                userinterface(user_data)
+                return
+
+        messagebox.showerror("Error", "Invalid email Id or password")
+        
+    login_button = tk.Button(register_window , text ="login" , command=func)
+    login_button.grid(row=5, columnspan=2, padx=5, pady=5)
+def userinterface(user_data):
+    user_window = tk.Tk()
+    user_window.title("Login")
+    products_button = tk.Button(user_window, text="See Products", command=lambda: open_product_selection_window(user_data))
+    wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data))
+    seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(user_data))
+    seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data))
+    products_button.grid(row=5, column=1, padx=5, pady=5)
+    wallet_button.grid(row=5, column=2, padx=5, pady=5)
+    seeDiscountButton.grid(row=5, column=3, padx=5, pady=5)
+    seeCartButton.grid(row=5, column=4, padx=5, pady=5)
+
+def open_cart_window(user_data):
+    pass
+def open_wallet_window(user_data):
+    pass
+def open_discount_window(user_data):
+    pass
+
 def admin_login():
     login_window.destroy()
     admin_login_window = tk.Tk()
@@ -279,17 +307,8 @@ def run():
     # Create login window
     global login_window
     login_window = tk.Tk()
-    login_window.title("Login")
+    login_window.title("Blinkit")
 
-    # Email label and entry
-    tk.Label(login_window, text="Email:").grid(row=0, column=0, padx=5, pady=5)
-    email_entry = tk.Entry(login_window)
-    email_entry.grid(row=0, column=1, padx=5, pady=5)
-
-    # Password label and entry
-    tk.Label(login_window, text="Password:").grid(row=1, column=0, padx=5, pady=5)
-    password_entry = tk.Entry(login_window, show="*")
-    password_entry.grid(row=1, column=1, padx=5, pady=5)
 
     # User Login button
     tk.Button(login_window, text="User Login", command=login).grid(row=2, column=0, padx=5, pady=5)
