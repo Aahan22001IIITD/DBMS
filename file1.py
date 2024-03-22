@@ -78,8 +78,9 @@ def admin_login():
         cursor.execute(admin_query, (email, password))
         admin_data = cursor.fetchone()
         if admin_data:
-            open_admin_dashboard(admin_data)
             admin_login_window.destroy()
+
+            open_admin_dashboard(admin_data)
             # Call function to open admin dashboard
             open_admin_dashboard(admin_data)
         else:
