@@ -18,19 +18,14 @@ def login():
     email = email_entry.get()
     password = password_entry.get()
     
-    # Check if email and password match with any user's credentials
     for user_data in users_data:
         if email == user_data[2] and password == user_data[3]:
-            # Destroy login window
             login_window.destroy()
-            # Open product selection window
             open_product_selection_window(user_data)
             return
-    # If no match found, show error message
     messagebox.showerror("Error", "Invalid email Id or password")
 
 def open_product_selection_window(user_data):
-    # Create new window for product selection
     product_window = tk.Tk()
     product_window.title("Product Selection")
     
@@ -38,7 +33,6 @@ def open_product_selection_window(user_data):
         selected_item = products_listbox.get(tk.ACTIVE)
         cart_listbox.insert(tk.END, selected_item)
     
-    # Products listbox
     products_label = tk.Label(product_window, text="Products:")
     products_label.grid(row=0, column=0, padx=5, pady=5)
 
@@ -48,11 +42,9 @@ def open_product_selection_window(user_data):
         products_listbox.insert(tk.END, product)
     products_listbox.grid(row=1, column=0, padx=5, pady=5)
 
-    # Add to Cart button
     add_button = tk.Button(product_window, text="Add to Cart", command=add_to_cart)
     add_button.grid(row=2, column=0, padx=5, pady=5)
 
-    # Cart listbox
     cart_label = tk.Label(product_window, text="Cart:")
     cart_label.grid(row=0, column=1, padx=5, pady=5)
 
@@ -61,11 +53,9 @@ def open_product_selection_window(user_data):
 
     product_window.mainloop()
 def register():
-    # Create a registration window
     register_window = tk.Tk()
     register_window.title("Register")
 
-    # Registration fields
     name_label = tk.Label(register_window, text="Name:")
     name_label.grid(row=0, column=0, padx=5, pady=5)
     name_entry = tk.Entry(register_window)
@@ -91,19 +81,18 @@ def register():
     phone_entry = tk.Entry(register_window)
     phone_entry.grid(row=4, column=1, padx=5, pady=5)
 
-    # Register button'
     def register_user():
 
-        # Retrieve data from the entry fields
         name = name_entry.get()
         email = email_entry.get()
         password = password_entry.get()
         address = address_entry.get()
         phone_number = phone_entry.get()
-
-        # Insert user data into the CUSTOMERS table
-        insert_query = "INSERT INTO customers (customer_id,name, email, password, address, phone_number,cart_id, wallet_id) VALUES (%s, %s, %s, %s, %s)"
-        user_data = (last_entry[0]+1,name, email, password, address, phone_number,last_entry[6]+1,last_entry[7]+1)
+        #while registering the member , a wallet id will be generated , with a balance of zero ,and similarly a cart id of an empty card will be generated. 
+        insert_query = "INSERT INTO customers (name, email, password, address, phone_number,cart_id, wallet_id) VALUES (%s,%s ,%s, %s, %s, %s, %s)"
+        insert_query_wallet = "INSERT INTO WALLET(balance) values (0)"
+        insert_query_cart =  "Into cart(product_id,product_quantity,cost) values (-1 , 0 , 0 )"
+        user_data = (name, email, password, address, phone_number,last_entry[6]+1,last_entry[7]+1)
         cursor.execute(insert_query, user_data)
         cnx.commit()
 
@@ -113,7 +102,6 @@ def register():
     register_button = tk.Button(register_window, text="Register", command=register_user)
     register_button.grid(row=5, columnspan=2, padx=5, pady=5)
 
-    # Back button
     def go_back():
         register_window.destroy()
 
@@ -122,24 +110,15 @@ def register():
 
     register_window.mainloop()
 def run():
-# Create login window
     login_window = tk.Tk()
     login_window.title("Login")
-
-    # email label and entry
     tk.Label(login_window, text="Email ID:").grid(row=0, column=0, padx=5, pady=5)
     email_entry = tk.Entry(login_window)
     email_entry.grid(row=0, column=1, padx=5, pady=5)
-
-    # Password label and entry
     tk.Label(login_window, text="Password:").grid(row=1, column=0, padx=5, pady=5)
     password_entry = tk.Entry(login_window, show="*")
     password_entry.grid(row=1, column=1, padx=5, pady=5)
-
-    # Login button
     tk.Button(login_window, text="Login", command=login).grid(row=2, columnspan=2, padx=5, pady=5)
-
-    # Register button
     tk.Button(login_window, text="Register", command=register).grid(row=3, columnspan=2, padx=5, pady=5)
 
     login_window.mainloop()
