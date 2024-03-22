@@ -205,7 +205,18 @@ def open_admin_dashboard(admin_data):
     tk.Button(admin_dashboard, text="Remove Product", command=remove_product).pack(pady=5)
     admin_dashboard.mainloop()
 
-
+def getProducts():
+    products=[]
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    for product in tot_products:
+        if(product[4]):#if that product is available
+            products.append(product)
+    return products
+def AddToCart(user_data):
+    cart_id = user_data[6] #get that particular cart_id of that user
+    pass
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")
@@ -217,7 +228,7 @@ def open_product_selection_window(user_data):
     products_label = tk.Label(product_window, text="Products:")
     products_label.grid(row=0, column=0, padx=5, pady=5)
 
-    products = ["Apples", "Bananas", "Oranges", "Bread", "Milk", "Eggs", "Cheese"]
+    products = getProducts()
     products_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
     for product in products:
         products_listbox.insert(tk.END, product)
