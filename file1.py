@@ -24,6 +24,18 @@ for cart in cart_data:
     print(cart)
 last_entry = users_data[-1]
 def login():
+    register_window = tk.Tk()
+    register_window.title("Login")
+
+    email_label = tk.Label(register_window, text="Email ID:")
+    email_label.grid(row=1, column=0, padx=5, pady=5)
+    email_entry = tk.Entry(register_window)
+    email_entry.grid(row=1, column=1, padx=5, pady=5)
+
+    password_label = tk.Label(register_window, text="Password:")
+    password_label.grid(row=2, column=0, padx=5, pady=5)
+    password_entry = tk.Entry(register_window, show="*")
+    password_entry.grid(row=2, column=1, padx=5, pady=5)
     email = email_entry.get()
     password = password_entry.get()
     
@@ -34,19 +46,45 @@ def login():
             return
     messagebox.showerror("Error", "Invalid email Id or password")
 def admin_login():
-    email = email_entry.get()
-    password = password_entry.get()
-    
-    # Check if the provided credentials belong to an admin
-    admin_query = "SELECT * FROM admins WHERE email = %s AND password = %s"
-    cursor.execute(admin_query, (email, password))
-    admin_data = cursor.fetchone()
-    if admin_data:
-        login_window.destroy()
-        # Call function to open admin dashboard
-        open_admin_dashboard(admin_data)
-        return
-    messagebox.showerror("Error", "Invalid admin credentials")
+    # Create a new window for admin login
+    login_window.destroy()
+    admin_login_window = tk.Tk()
+    admin_login_window.title("Admin - Login")
+
+    # Email label and entry
+    email_label = tk.Label(admin_login_window, text="Email ID:")
+    email_label.grid(row=0, column=0, padx=5, pady=5)
+    email_entry = tk.Entry(admin_login_window)
+    email_entry.grid(row=0, column=1, padx=5, pady=5)
+
+    # Password label and entry
+    password_label = tk.Label(admin_login_window, text="Password:")
+    password_label.grid(row=1, column=0, padx=5, pady=5)
+    password_entry = tk.Entry(admin_login_window, show="*")
+    password_entry.grid(row=1, column=1, padx=5, pady=5)
+
+    def validate_admin_login():
+        email = email_entry.get()
+        password = password_entry.get()
+        
+        # Check if the provided credentials belong to an admin
+        admin_query = "SELECT * FROM admins WHERE email = %s AND password = %s"
+        cursor.execute(admin_query, (email, password))
+        admin_data = cursor.fetchone()
+        if admin_data:
+            open_admin_dashboard()
+            admin_login_window.destroy()
+            # Call function to open admin dashboard
+            open_admin_dashboard(admin_data)
+        else:
+            messagebox.showerror("Error", "Invalid admin credentials")
+
+    # Login button
+    login_button = tk.Button(admin_login_window, text="Login", command=validate_admin_login)
+    login_button.grid(row=2, columnspan=2, padx=5, pady=5)
+
+    admin_login_window.mainloop()
+
 def open_admin_dashboard(admin_data):
     # Implement your admin dashboard here...
     pass
