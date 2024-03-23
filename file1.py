@@ -55,7 +55,6 @@ def login():
                 register_window.destroy()
                 userinterface(user_data)
                 return
-
         messagebox.showerror("Error", "Invalid email Id or password")
         
     login_button = tk.Button(register_window , text ="login" , command=func)
@@ -212,10 +211,22 @@ def getProducts():
     tot_products = cursor.fetchall()
     for product in tot_products:
         if(product[4]):#if that product is available
-            products.append(product)
+            products.append(product[1])
     return products
+
+def getProductsfull():
+    products=[]
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    for product in tot_products:
+        if(product[4]):#if that product is available
+            products.append(product)
+    return product
+
 def AddToCart(user_data):
-    cart_id = user_data[6] #get that particular cart_id of that user
+
+
     pass
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
@@ -224,24 +235,36 @@ def open_product_selection_window(user_data):
     def add_to_cart():
         selected_item = products_listbox.get(tk.ACTIVE)
         cart_listbox.insert(tk.END, selected_item)
+        products = getProductsfull()
+        cart_id = user_data[6] #get that particular cart_id of that user
+        for product in products:
+            if product[1] == selected_item:
+                fullproduct = product
+        getCartQuery = "SELECT * FROM CART WHERE CART_ID = cart_id"
+        cartInsertQuery = "INSERT INTO CART (product_quantity , cost , product_id) values (%s , %s , %s)"
+        # cursor.execute(cartInsertQuery  , )
+
     
     products_label = tk.Label(product_window, text="Products:")
     products_label.grid(row=0, column=0, padx=5, pady=5)
-
     products = getProducts()
     products_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
     for product in products:
         products_listbox.insert(tk.END, product)
     products_listbox.grid(row=1, column=0, padx=5, pady=5)
-
+    cart_id_ = user_data[6] #get that particular cart_id of that user
+    getCartQuery = "SELECT * FROM CART WHERE CART_ID = cart_id_"
+    cart_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
+    cart_listbox.grid(row=1, column=1, padx=5, pady=5)
+    cursor.execute(getCartQuery)
+    carts = cursor.fetchall()
+    cart_label = tk.Label(product_window, text="Cart:")
+    cart_label.grid(row=0, column=1, padx=5, pady=5)
+    for product in carts:
+        cart_listbox.insert(tk.END,product)
     add_button = tk.Button(product_window, text="Add to Cart", command=add_to_cart)
     add_button.grid(row=2, column=0, padx=5, pady=5)
 
-    cart_label = tk.Label(product_window, text="Cart:")
-    cart_label.grid(row=0, column=1, padx=5, pady=5)
-
-    cart_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
-    cart_listbox.grid(row=1, column=1, padx=5, pady=5)
 
     product_window.mainloop()
 def register():
