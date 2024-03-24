@@ -133,13 +133,13 @@ values (1000,"kilogram",1,100,1928),
 
 
 
-create table cart(
-	cart_id int  primary key auto_increment,
-	product_quantity int default 0,
-	cost  decimal(8,2) default 0,
-    product_id int,
-    -- removing foreign key reference of product_id , reason - for new users , having empty cart , we cant assign
-    foreign key(product_id) references products(product_id) 
+CREATE TABLE cart (
+    cart_id INT PRIMARY KEY AUTO_INCREMENT,
+    product_quantity INT DEFAULT 0,
+    cost DECIMAL(8,2) DEFAULT 0,
+    product_id INT,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT cart_pk PRIMARY KEY (cart_id, product_id)
 );
 
 alter table cart auto_increment=300;
