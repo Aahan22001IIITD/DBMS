@@ -136,9 +136,10 @@ values (1000,"kilogram",1,100,1928),
 create table cart(
 	cart_id int  primary key auto_increment,
 	product_quantity int default 0,
-	cost  decimal(8,2) not null,
+	cost  decimal(8,2) default 0,
     product_id int,
-    foreign key(product_id) references products(product_id) on update cascade on delete set NULL
+    -- removing foreign key reference of product_id , reason - for new users , having empty cart , we cant assign
+    foreign key(product_id) references products(product_id) 
 );
 
 alter table cart auto_increment=300;
@@ -284,12 +285,17 @@ values (600,1,300),
         (608,9,308),
         (609,10,309);
         
-create table wallet (
+create table adminsadminswallet (
 	wallet_id int primary key auto_increment,
 	balance decimal(10,2) default 0,
 	constraint var4 check (balance>=0)
 );
 
+create table wallet (
+	wallet_id int primary key auto_increment,
+	balance decimal(10,2) default 0,
+	constraint var42 check (balance>=0)
+);
 
 
 alter table wallet auto_increment=800;
@@ -319,9 +325,9 @@ create table customers (
 	phone_number char(10) not null,
     	cart_id int,
     	wallet_id int,
-	foreigncustomerscustomers key(cart_id) references cart(cart_id) on update cascade on delete cascade ,
+	foreign key(cart_id) references cart(cart_id) on update cascade on delete cascade ,
     foreign key(wallet_id) references wallet(wallet_id) on update cascade on delete cascade
-);
+);	
 
 alter table customers auto_increment=700;
 
@@ -352,6 +358,7 @@ create table place (
     foreign key(order_id) references orders(order_id) on update cascade
 );
 
+
 insert into place
 values (current_date(),current_time(),700,600),
 	(current_date(),current_time(),701,601),
@@ -363,20 +370,5 @@ values (current_date(),current_time(),700,600),
         (current_date(),current_time(),707,607),
         (current_date(),current_time(),708,608),
         (current_date(),current_time(),709,609);
-        
-        
-        
-	SELECT * FROM adds_discount;
-    SELECT * FROM ADMINS;
-    SELECT * FROM consists_of;
-    SELECT * FROM CUSTOMERS;
-    SELECT * FROM delivery_agent;
-    SELECT * FROM discount_and_offers;
-    SELECT * FROM inventory;
-    SELECT * FROM ORDERS;
-    SELECT * FROM PLACE;
-    SELECT * FROM PRODUCTS;
-    SELECT * FROM SUPPLIER;
-    SELECT * FROM transactions;
-    SELECT * FROM WALLET
+	select * from customers;
     
