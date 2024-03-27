@@ -4,7 +4,7 @@ from tkinter import messagebox
 cnx = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="admin",
+    password="root",
     database="dbms_project"
 )
 cursor = cnx.cursor()
@@ -75,7 +75,7 @@ def open_cart_window(user_data):
     cart_window = tk.Tk()
     cart_window.title("Cart")
     query1 = "SELECT * FROM CART WHERE CART_ID = %s"
-    cart_id = user_data['cart_id']  # Assuming user_data contains the cart_id
+    cart_id = user_data[6]  # Assuming user_data contains the cart_id
     cursor.execute(query1, (cart_id,))
     cart_data = cursor.fetchall()
     for row_num, row_data in enumerate(cart_data):
@@ -88,27 +88,20 @@ def open_cart_window(user_data):
 def open_wallet_window(user_data):
     wallet_window = tk.Tk()
     wallet_window.title("Wallet")
-    user_id = user_data['user_id']  # Assuming user_data contains the user_id
-    query1 = "SELECT * FROM customers WHERE customer_id = %s"
-    cursor.execute(query1, (user_id,))
+    wallet_id = user_data[7]  # Assuming user_data contains the user_id
+    query1 = "SELECT * FROM WALLET WHERE wallet_id = %s"
+    cursor.execute(query1, (wallet_id,))
     wallet_data = cursor.fetchone()
-    for row_num, row_data in enumerate(wallet_data):
-        for col_num, cell_data in enumerate(row_data):
-            label = tk.Label(wallet_window, text=str(cell_data))
-            label.grid(row=row_num, column=col_num)
+
     wallet_window.mainloop()
 
 def open_discount_window(user_data):
     discount_window = tk.Tk()
     discount_window.title("Discounts")
-    query1 = "SELECT * FROM DISCOUNTS"
+    query1 = "SELECT * FROM DISCOUNT_AND_OFFERS"
     cursor.execute(query1)
     discount_data = cursor.fetchall()
-    for row_num, row_data in enumerate(discount_data):
-        for col_num, cell_data in enumerate(row_data):
-            label = tk.Label(discount_window, text=str(cell_data))
-            label.grid(row=row_num, column=col_num)
-    discount_window.mainloop()
+    return discount_data
 
 def admin_login():
     login_window.destroy()
@@ -257,10 +250,21 @@ def getProductsfull():
             products.append(product)
     return product
 
-def AddToCart(user_data):
-
-
-    pass
+def AddToCart(user_data,product_id,quantity):
+    query1 = "SELECT is_available,quantity FROM PRODUCTS WHERE PRODUCT_ID = %s"
+    cursor.execute(query1, (product_id,))
+    result = cursor.fetchone()
+    is_available,available_quantity = result
+    if is_available:
+        if available_quantity >= quantity:
+            query2="INSERT INTO CART (product_id,product_quantity,cost) VALUES (%s,%s,%s)"
+            cursor.execute(query2,(product_id,quantity,product[3]*quantity))
+            cnx.commit()
+            messagebox.showinfo("Success", "Product added to cart successfully!")
+        else:
+            messagebox.showerror("Error", "Quantity not available")
+    else:
+        messagebox.showerror("Error", "Product not available")
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")
