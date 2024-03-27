@@ -74,10 +74,30 @@ def userinterface(user_data):
 def open_cart_window(user_data):
     cart_window = tk.Tk()
     cart_window.title("Cart")
+    query1 = "SELECT * FROM CART WHERE CART_ID = %s"
+    cart_id = user_data['cart_id']  # Assuming user_data contains the cart_id
+    cursor.execute(query1, (cart_id,))
+    cart_data = cursor.fetchall()
+    for row_num, row_data in enumerate(cart_data):
+        for col_num, cell_data in enumerate(row_data):
+            label = tk.Label(cart_window, text=str(cell_data))
+            label.grid(row=row_num, column=col_num)
 
-    query1="SELECT * FROM CART WHERE CART_ID = %s"
+    cart_window.mainloop()
+
 def open_wallet_window(user_data):
-    pass
+    wallet_window = tk.Tk()
+    wallet_window.title("Wallet")
+    user_id = user_data['user_id']  # Assuming user_data contains the user_id
+    query1 = "SELECT * FROM customers WHERE customer_id = %s"
+    cursor.execute(query1, (user_id,))
+    wallet_data = cursor.fetchone()
+    for row_num, row_data in enumerate(wallet_data):
+        for col_num, cell_data in enumerate(row_data):
+            label = tk.Label(wallet_window, text=str(cell_data))
+            label.grid(row=row_num, column=col_num)
+    wallet_window.mainloop()
+
 def open_discount_window(user_data):
     pass
 
@@ -218,6 +238,7 @@ def getProducts():
     return products
 
 def getProductsfull():
+    global product
     products=[]
     query = "SELECT * FROM PRODUCTS"
     cursor.execute(query)
