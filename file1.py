@@ -99,7 +99,16 @@ def open_wallet_window(user_data):
     wallet_window.mainloop()
 
 def open_discount_window(user_data):
-    pass
+    discount_window = tk.Tk()
+    discount_window.title("Discounts")
+    query1 = "SELECT * FROM DISCOUNTS"
+    cursor.execute(query1)
+    discount_data = cursor.fetchall()
+    for row_num, row_data in enumerate(discount_data):
+        for col_num, cell_data in enumerate(row_data):
+            label = tk.Label(discount_window, text=str(cell_data))
+            label.grid(row=row_num, column=col_num)
+    discount_window.mainloop()
 
 def admin_login():
     login_window.destroy()
