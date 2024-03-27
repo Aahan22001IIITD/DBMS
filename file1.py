@@ -72,7 +72,10 @@ def userinterface(user_data):
     seeCartButton.grid(row=5, column=4, padx=5, pady=5)
 
 def open_cart_window(user_data):
-    pass
+    cart_window = tk.Tk()
+    cart_window.title("Cart")
+
+    query1="SELECT * FROM CART WHERE CART_ID = %s"
 def open_wallet_window(user_data):
     pass
 def open_discount_window(user_data):
