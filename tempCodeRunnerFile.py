@@ -111,11 +111,12 @@ def place_order(user_data, consists_of_data):
             c1 = product_counts.get(key, 0)
             for i, product in enumerate(tot_products):
                 if product[0] == key:
-                    new_product = list(product)
-                    new_product[6] = int(new_product[6]) - c1
-                    if new_product[6] == 0:
-                        new_product[4] = False
-                    tot_products[i] = tuple(new_product)
+                    cursor.execute("UPDATE products SET quantity = %s WHERE product_id = %s", (int(product[6])-c1, key))
+                    if int(product[6])-c1 == 0:
+                        cursor.execute("UPDATE products SET is_available = %s WHERE product_id = %s", (False, key))
+
+        for data in consists_of_data:
+            cursor.execute("DELETE FROM consists_of WHERE cart_id = %s", (user_data[6],)) 
 
         success_window = tk.Tk()
         success_window.title("Order Placed")
