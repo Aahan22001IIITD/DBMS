@@ -72,10 +72,59 @@ def userinterface(user_data):
     wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data, wallet_data))
     seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(discount_offers_data))
     seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data, consists_of_data))
+    place_order_button = tk.Button(user_window, text="Place Order", command=lambda: place_order(user_data, consists_of_data))
     products_button.grid(row=5, column=1, padx=5, pady=5)
     wallet_button.grid(row=5, column=2, padx=5, pady=5)
     seeDiscountButton.grid(row=5, column=3, padx=5, pady=5)
     seeCartButton.grid(row=5, column=4, padx=5, pady=5)
+    place_order_button.grid(row=5, column=5, padx=5, pady=5)
+
+def place_order(user_data, consists_of_data):
+    product_counts = {} # {orderId : quantity}
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    
+    for data in consists_of_data:
+        if data[2] == user_data[6]:
+            product_counts[data[1]] = product_counts.get(data[1], 0) + 1
+
+
+    order_placed = True
+    for key in product_counts.keys():
+        c1 = product_counts.get(key, 0)
+        for product in tot_products:
+            if product[0] == key and c1 > int(product[6]):
+                order_placed = False
+                break
+    
+    if order_placed == False:
+        error_window = tk.Tk()
+        error_window.title("Error")
+        error_label = tk.Label(error_window, text="Order cannot be processed due to unavailability of items.")
+        error_label.pack()
+        ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
+        ok_button.pack()
+        error_window.mainloop()
+    else:
+        for key in product_counts.keys():
+            c1 = product_counts.get(key, 0)
+            for i, product in enumerate(tot_products):
+                if product[0] == key:
+                    new_product = list(product)
+                    new_product[6] = int(new_product[6]) - c1
+                    if new_product[6] == 0:
+                        new_product[4] = False
+                    tot_products[i] = tuple(new_product)
+
+        success_window = tk.Tk()
+        success_window.title("Order Placed")
+        success_label = tk.Label(success_window, text="Order Placed Successfully!")
+        success_label.pack()
+        ok_button = tk.Button(success_window, text="OK", command=success_window.destroy)
+        ok_button.pack()
+        success_window.mainloop()
+
 
 def open_cart_window(user_data, consists_of_data):
     product_counts = {}
