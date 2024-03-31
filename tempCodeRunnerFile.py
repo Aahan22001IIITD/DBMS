@@ -1,6 +1,7 @@
 import mysql.connector
 import tkinter as tk
 from tkinter import messagebox
+from datetime import datetime
 cnx = mysql.connector.connect(
     host="localhost",
     user="root",
@@ -75,6 +76,83 @@ def userinterface(user_data):
     seeDiscountButton.grid(row=5, column=3, padx=5, pady=5)
     seeCartButton.grid(row=5, column=4, padx=5, pady=5)
     place_order_button.grid(row=5, column=5, padx=5, pady=5)
+<<<<<<< HEAD
+=======
+
+def place_order(user_data, consists_of_data):
+    product_counts = {} # {orderId : quantity}
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    tot_amount = 0
+    for data in consists_of_data:
+        if data[2] == user_data[6]:
+            product_counts[data[1]] = product_counts.get(data[1], 0) + 1
+    cart_id = data[2]
+
+
+    order_placed = True
+    for key in product_counts.keys():
+        c1 = product_counts.get(key, 0)
+        for product in tot_products:
+            tot_amount += product[3]
+            if product[0] == key and c1 > int(product[6]):
+                order_placed = False
+                break
+    
+    if order_placed == False:
+        error_window = tk.Tk()
+        error_window.title("Error")
+        error_label = tk.Label(error_window, text="Order cannot be processed due to unavailability of items.")
+        error_label.pack()
+        ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
+        ok_button.pack()
+        error_window.mainloop()
+    else:
+        for key in product_counts.keys():
+            c1 = product_counts.get(key, 0)
+            for i, product in enumerate(tot_products):
+                if product[0] == key:
+                    cursor.execute("UPDATE products SET quantity = %s WHERE product_id = %s", (int(product[6])-c1, key))
+                    if int(product[6])-c1 == 0:
+                        cursor.execute("UPDATE products SET is_available = %s WHERE product_id = %s", (False, key))
+
+                    
+
+        query = "DELETE FROM consists_of WHERE cart_id = %s"
+        cart_id = user_data[5]
+        values = (cart_id,)
+        cursor.execute(query, values)
+        cnx.commit()
+
+        # delete all the cart contents
+        current_date = datetime.now().date().strftime('%Y-%m-%d')
+        current_time = datetime.now().time().strftime('%H:%M:%S')
+
+        query = "INSERT INTO transactions (payment_method, transaction_date, transaction_time, amount) VALUES ('Credit Card', %s, %s, 123.45)"
+        values = (current_date, current_time)
+        cursor.execute(query, values)
+        cnx.commit()
+
+        
+
+        query = "INSERT INTO orders (order_date, order_time, order_statuss, total_amount, cart_id, discount_id, transactions_id, admin_id, agent_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        values = (current_date, current_time, False, tot_amount, user_data[6], None, 510, 100, 7232)
+        cursor.execute(query, values)
+        cnx.commit()
+
+
+
+        success_window = tk.Tk()
+        success_window.title("Order Placed")
+        success_label = tk.Label(success_window, text="Order Placed Successfully!\nTotal Amount: {}".format(tot_amount))
+        success_label.pack()
+        ok_button = tk.Button(success_window, text="OK", command=success_window.destroy)
+        ok_button.pack()
+        success_window.mainloop()
+
+
+>>>>>>> e4e6ba26b4cf66d9c006456ec61e1fb9e1585420
 
 def place_order(user_data, consists_of_data):
     product_counts = {} # {orderId : quantity}
@@ -351,6 +429,7 @@ def AddToCart(user_data, selected_item, consists_of_data):
             break
 
     consists_of_data.append((order_id, product_id, cart_id))
+<<<<<<< HEAD
     insert_query = "INSERT INTO cart (cart_id , product_quantity, cost, product_id) VALUES (%s , %s, %s, %s)"
     product_quantity = 1  
     cost = product[3] 
@@ -359,6 +438,13 @@ def AddToCart(user_data, selected_item, consists_of_data):
     cursor.execute(insert_query, values)
     cnx.commit()
 
+=======
+    query = "INSERT INTO consists_of (order_id, product_id, cart_id) VALUES (%s, %s, %s)"
+    values = (order_id, product_id, cart_id)
+    cursor.execute(query, values)
+    cnx.commit()
+    
+>>>>>>> e4e6ba26b4cf66d9c006456ec61e1fb9e1585420
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")

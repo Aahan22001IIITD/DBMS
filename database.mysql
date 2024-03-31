@@ -51,14 +51,14 @@ values ("aahan","bike",100,false,"LC73 LE1964"),
 
 create table products (
     product_id INT primary key auto_increment,
-    product_name varchar (50) not null,
-    category varchar (50) not null,
+    product_name varchar (50) ,
+    category varchar (50) ,
     price decimal(7,2) default 0,
     is_available bool default false,
-    check (is_available in (true,false)),
+    -- check (is_available in (true,false))-- ,
     admin_id int,
     quantity int not null,
-    measuring_type varchar(50) not null,
+    measuring_type varchar(50) ,
     foreign key(admin_id) references admins(admin_id)
 );
 
@@ -73,7 +73,8 @@ values ("Rice","grains_and_cereals",103,true,100,1,"kilogram"),
         ("panner","diary",95,true,103,250,"grams"),
         ("apple","fresh_fruits_and_vegetables",76,true,100,1,"kilogram"),
         ("onion","fresh_fruits_and_vegetables",45,false,101,1,"kilogram");
-
+insert into products(product_id , product_name,category,price,is_available,admin_id,quantity,measuring_type)
+values (100000 ,null,null,0,null,101,1,null);
 
 create table inventory (
 	
@@ -133,20 +134,23 @@ values (1000,"kilogram",1,100,1928),
 
 
 
+
 CREATE TABLE cart (
     cart_id INT AUTO_INCREMENT,
     product_quantity INT DEFAULT 0,
     cost DECIMAL(8,2) DEFAULT 0,
     product_id INT,
-    FOREIGN KEY (product_id) REFERENCES products(product_id),
     CONSTRAINT cart_pk PRIMARY KEY (cart_id, product_id)
 );
 
 alter table cart auto_increment=300;
+ALTER TABLE cart
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (cart_id, product_id);
 
 insert into cart(product_id,product_quantity,cost)
 values (1,4,250),
-	(2,3,25),
+	(2,1,25),
         (3,10,3432),
         (4,12,2504),
         (5,17,4000),
@@ -240,7 +244,7 @@ create table orders (
     	admin_id int,
 	agent_id int,
 	constraint var3 check (total_amount>=0),
-    foreign key(cart_id) references cart(cart_id),
+    -- foreign key(cart_id) references cart(cart_id),
     foreign key(discount_id) references discount_and_offers(discount_id) on update cascade,
     foreign key(transactions_id) references transactions(transactions_id) on update cascade ,
     foreign key(admin_id) references admins(admin_id) on update cascade,
@@ -267,9 +271,9 @@ create table consists_of (
     	order_id int,
     	product_id int,
     	cart_id int,
-	foreign key(order_id) references orders(order_id) on update cascade ,
-    foreign key(product_id) references products(product_id) on update cascade ,
-    foreign key(cart_id) references cart(cart_id) on delete cascade 
+	-- foreign key(order_id) references orders(order_id) on update cascade, 
+    foreign key(product_id) references products(product_id) on update cascade 
+    -- foreign key(cart_id) references cart(cart_id) on delete cascade 
 );
 
 
@@ -353,9 +357,7 @@ create table place (
 	time_of_placing time not null,
     	customer_id int,
     	order_id int,
-	primary key (customer_id,order_id),
-    foreign key(customer_id) references customers(customer_id) on update cascade ,
-    foreign key(order_id) references orders(order_id) on update cascade
+	primary key (customer_id,order_id)
 );
 
 
@@ -372,3 +374,41 @@ values (current_date(),current_time(),700,600),
         (current_date(),current_time(),709,609);
 	select * from customers;
     
+DELIMITER //
+
+CREATE TRIGGER check_inventory_before_order
+BEFORE INSERT ON place
+FOR EACH ROW
+BEGIN
+    DECLARE available_quantity DECIMAL(30,2);
+    SELECT product_quantity INTO available_quantity 
+    FROM consists_of 
+    WHERE order_id = NEW.order_id 
+    AND product_id IN (SELECT product_id FROM inventory);
+    
+    IF NEW.product_quantity > available_quantity THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Order quantity exceeds available inventory';
+    END IF;
+END//
+
+DELIMITER ;
+
+
+
+DELIMITER //
+
+CREATE TRIGGER check_wallet_before_order
+BEFORE INSERT ON orders
+FOR EACH ROW
+BEGIN
+    DECLARE order_value DECIMAL(8,2);
+    DECLARE wallet_balance DECIMAL(10,2);
+    SELECT SUM(product_quantity * price) INTO order_value FROM cart WHERE cart_id = NEW.cart_id;
+    SELECT balance INTO wallet_balance FROM wallet WHERE wallet_id = NEW.wallet_id;
+    IF order_value > wallet_balance THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Order value exceeds wallet balance';
+    END IF;
+END//
+
+DELIMITER ;
+select * from products;
