@@ -84,16 +84,18 @@ def place_order(user_data, consists_of_data):
     query = "SELECT * FROM PRODUCTS"
     cursor.execute(query)
     tot_products = cursor.fetchall()
-    
+    tot_amount = 0
     for data in consists_of_data:
         if data[2] == user_data[6]:
             product_counts[data[1]] = product_counts.get(data[1], 0) + 1
+    cart_id = data[2]
 
 
     order_placed = True
     for key in product_counts.keys():
         c1 = product_counts.get(key, 0)
         for product in tot_products:
+            tot_amount += product[3]
             if product[0] == key and c1 > int(product[6]):
                 order_placed = False
                 break
@@ -115,16 +117,40 @@ def place_order(user_data, consists_of_data):
                     if int(product[6])-c1 == 0:
                         cursor.execute("UPDATE products SET is_available = %s WHERE product_id = %s", (False, key))
 
-        for data in consists_of_data:
-            cursor.execute("DELETE FROM consists_of WHERE cart_id = %s", (user_data[6],)) 
+                    
+
+        query = "DELETE FROM consists_of WHERE cart_id = %s"
+        cart_id = user_data[5]
+        values = (cart_id,)
+        cursor.execute(query, values)
+        cnx.commit()
+
+        # delete all the cart contents
+        current_date = datetime.now().date().strftime('%Y-%m-%d')
+        current_time = datetime.now().time().strftime('%H:%M:%S')
+
+        query = "INSERT INTO transactions (payment_method, transaction_date, transaction_time, amount) VALUES ('Credit Card', %s, %s, 123.45)"
+        values = (current_date, current_time)
+        cursor.execute(query, values)
+        cnx.commit()
+
+        
+
+        query = "INSERT INTO orders (order_date, order_time, order_statuss, total_amount, cart_id, discount_id, transactions_id, admin_id, agent_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        values = (current_date, current_time, False, tot_amount, user_data[6], None, 510, 100, 7232)
+        cursor.execute(query, values)
+        cnx.commit()
+
+
 
         success_window = tk.Tk()
         success_window.title("Order Placed")
-        success_label = tk.Label(success_window, text="Order Placed Successfully!")
+        success_label = tk.Label(success_window, text="Order Placed Successfully!\nTotal Amount: {}".format(tot_amount))
         success_label.pack()
         ok_button = tk.Button(success_window, text="OK", command=success_window.destroy)
         ok_button.pack()
         success_window.mainloop()
+
 
 
 def open_cart_window(user_data, consists_of_data):
@@ -342,6 +368,11 @@ def AddToCart(user_data, selected_item, consists_of_data):
             break
 
     consists_of_data.append((order_id, product_id, cart_id))
+    query = "INSERT INTO consists_of (order_id, product_id, cart_id) VALUES (%s, %s, %s)"
+    values = (order_id, product_id, cart_id)
+    cursor.execute(query, values)
+    cnx.commit()
+    
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")
