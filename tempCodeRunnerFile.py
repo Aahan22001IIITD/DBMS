@@ -11,11 +11,17 @@ cursor = cnx.cursor()
 query = "SELECT * FROM CUSTOMERS"
 query_wallet = "SELECT * FROM WALLET"
 query_cart = "SELECT * FROM CART"
+query_consists_of = "SELECT * FROM CONSISTS_OF"
+query_discount_and_offers = "SELECT * FROM DISCOUNT_AND_OFFERS"
 cursor.execute(query)
 users_data = cursor.fetchall()
 query_admin = "SELECT * FROM ADMINS"
 cursor.execute(query_admin)
 adminsdata = cursor.fetchall()
+cursor.execute(query_consists_of)
+consists_of_data = cursor.fetchall()
+cursor.execute(query_discount_and_offers)
+discount_offers_data = cursor.fetchall()
 admindata=[]
 for admin in adminsdata:
     admindata.append(admin[2])
@@ -63,20 +69,74 @@ def userinterface(user_data):
     user_window = tk.Tk()
     user_window.title("Login")
     products_button = tk.Button(user_window, text="See Products", command=lambda: open_product_selection_window(user_data))
-    wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data))
-    seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(user_data))
-    seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data))
+    wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data, wallet_data))
+    seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(discount_offers_data))
+    seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data, consists_of_data))
     products_button.grid(row=5, column=1, padx=5, pady=5)
     wallet_button.grid(row=5, column=2, padx=5, pady=5)
     seeDiscountButton.grid(row=5, column=3, padx=5, pady=5)
     seeCartButton.grid(row=5, column=4, padx=5, pady=5)
 
-def open_cart_window(user_data):
-    pass
-def open_wallet_window(user_data):
-    pass
-def open_discount_window(user_data):
-    pass
+def open_cart_window(user_data, consists_of_data):
+    product_counts = {}
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    
+    for data in consists_of_data:
+        if data[2] == user_data[6]:
+            product_counts[data[1]] = product_counts.get(data[1], 0) + 1
+
+    product_window = tk.Tk()
+    product_window.title("Product Counts")
+    heading_label = tk.Label(product_window, text="Product Counts")
+    heading_label.pack()
+    product_listbox = tk.Listbox(product_window)
+    for product_id, count in product_counts.items():
+        for product in tot_products:
+            if product[0] == product_id:
+                product_listbox.insert(tk.END, f"{product[1]}: {count}")
+
+    product_listbox.pack()
+    product_window.mainloop()
+
+def open_wallet_window(user_data, wallet_data):
+    wallet_window = tk.Toplevel()
+    wallet_window.title("Wallet Details")
+
+    user_wallet = None
+    for wallet in wallet_data:
+        if wallet[0] == user_data[7]:
+            user_wallet = wallet
+            break
+
+    if user_wallet is None:
+        label = tk.Label(wallet_window, text="Wallet not found.")
+        label.pack()
+    else:
+        label_id = tk.Label(wallet_window, text=f"Wallet ID: {user_wallet[0]}")
+        label_id.pack()
+        label_balance = tk.Label(wallet_window, text=f"Wallet Balance: {user_wallet[1]}")
+        label_balance.pack()
+
+    wallet_window.mainloop()
+
+
+def open_discount_window(discount_offers_data):
+    discount_window = tk.Tk()
+    discount_window.title("Discount Offers")
+
+    tk.Label(discount_window, text="Discount ID").grid(row=0, column=0, padx=5, pady=5)
+    tk.Label(discount_window, text="Description").grid(row=0, column=1, padx=5, pady=5)
+    tk.Label(discount_window, text="Discount Percentage").grid(row=0, column=2, padx=5, pady=5)
+
+    for idx, discount_offer in enumerate(discount_offers_data, start=1):
+        tk.Label(discount_window, text=discount_offer[0]).grid(row=idx, column=0, padx=5, pady=5)
+        tk.Label(discount_window, text=discount_offer[1]).grid(row=idx, column=1, padx=5, pady=5)
+        tk.Label(discount_window, text=discount_offer[2]).grid(row=idx, column=2, padx=5, pady=5)
+
+    discount_window.mainloop()
+
 
 def admin_login():
     login_window.destroy()
@@ -213,9 +273,25 @@ def getProducts():
         if(product[4]):#if that product is available
             products.append(product[1])
     return products
-def AddToCart(user_data):
-    cart_id = user_data[6] #get that particular cart_id of that user
-    pass
+def AddToCart(user_data, selected_item, consists_of_data):
+    query = "SELECT * FROM PRODUCTS"
+    cursor.execute(query)
+    tot_products = cursor.fetchall()
+    # print(user_data)
+    # print(selected_item)
+    # print(consists_of_data)
+    # print(tot_products)
+
+    cart_id = user_data[6]
+    product_id = None
+    order_id = consists_of_data[len(consists_of_data)-1][0]+1
+
+    for product in tot_products:
+        if product[1] == selected_item:
+            product_id = product[0]
+            break
+
+    consists_of_data.append((order_id, product_id, cart_id))
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")
@@ -223,6 +299,7 @@ def open_product_selection_window(user_data):
     def add_to_cart():
         selected_item = products_listbox.get(tk.ACTIVE)
         cart_listbox.insert(tk.END, selected_item)
+        AddToCart(user_data, selected_item, consists_of_data)
     
     products_label = tk.Label(product_window, text="Products:")
     products_label.grid(row=0, column=0, padx=5, pady=5)
