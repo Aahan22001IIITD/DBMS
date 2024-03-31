@@ -4,18 +4,24 @@ from tkinter import messagebox
 cnx = mysql.connector.connect(
     host="localhost",
     user="root",
-    password="root",
+    password="admin",
     database="dbms_project"
 )
 cursor = cnx.cursor()
 query = "SELECT * FROM CUSTOMERS"
 query_wallet = "SELECT * FROM WALLET"
 query_cart = "SELECT * FROM CART"
+query_consists_of = "SELECT * FROM CONSISTS_OF"
+query_discount_and_offers = "SELECT * FROM DISCOUNT_AND_OFFERS"
 cursor.execute(query)
 users_data = cursor.fetchall()
 query_admin = "SELECT * FROM ADMINS"
 cursor.execute(query_admin)
 adminsdata = cursor.fetchall()
+cursor.execute(query_consists_of)
+consists_of_data = cursor.fetchall()
+cursor.execute(query_discount_and_offers)
+discount_offers_data = cursor.fetchall()
 admindata=[]
 for admin in adminsdata:
     admindata.append(admin[2])
@@ -33,22 +39,20 @@ def login():
     login_window.destroy()
     register_window = tk.Tk()
     register_window.title("Login")
-
     email_label = tk.Label(register_window, text="Email ID:")
     email_label.grid(row=1, column=0, padx=5, pady=5)
     email_entry = tk.Entry(register_window)
     email_entry.grid(row=1, column=1, padx=5, pady=5)
-
     password_label = tk.Label(register_window, text="Password:")
     password_label.grid(row=2, column=0, padx=5, pady=5)
     password_entry = tk.Entry(register_window, show="*")
     password_entry.grid(row=2, column=1, padx=5, pady=5)
-    
     def func():
         email = email_entry.get()
         password = password_entry.get()
-        # print(email)
-        # print(password)
+        print(users_data)
+        print(email)
+        print(password)
         for user_data in users_data:
             if email == user_data[2] and password == user_data[3]:
                 messagebox.showinfo("Login successful!")
@@ -63,45 +67,200 @@ def userinterface(user_data):
     user_window = tk.Tk()
     user_window.title("Login")
     products_button = tk.Button(user_window, text="See Products", command=lambda: open_product_selection_window(user_data))
-    wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data))
-    seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(user_data))
-    seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data))
+    wallet_button = tk.Button(user_window, text="See Wallet", command=lambda: open_wallet_window(user_data, wallet_data))
+    seeDiscountButton = tk.Button(user_window, text="See discounts", command=lambda: open_discount_window(discount_offers_data))
+    seeCartButton = tk.Button(user_window, text="See Cart", command=lambda: open_cart_window(user_data, consists_of_data))
+    place_order_button = tk.Button(user_window, text="Place Order", command=lambda: place_order(user_data, consists_of_data))
     products_button.grid(row=5, column=1, padx=5, pady=5)
     wallet_button.grid(row=5, column=2, padx=5, pady=5)
     seeDiscountButton.grid(row=5, column=3, padx=5, pady=5)
     seeCartButton.grid(row=5, column=4, padx=5, pady=5)
+    place_order_button.grid(row=5, column=5, padx=5, pady=5)
 
-def open_cart_window(user_data):
-    cart_window = tk.Tk()
-    cart_window.title("Cart")
-    query1 = "SELECT * FROM CART WHERE CART_ID = %s"
-    cart_id = user_data[6]  # Assuming user_data contains the cart_id
-    cursor.execute(query1, (cart_id,))
-    cart_data = cursor.fetchall()
-    for row_num, row_data in enumerate(cart_data):
-        for col_num, cell_data in enumerate(row_data):
-            label = tk.Label(cart_window, text=str(cell_data))
-            label.grid(row=row_num, column=col_num)
+def place_order(user_data, consists_of_data):
+    # Retrieve the user's cart
+    query = "SELECT * FROM cart WHERE cart_id = %s"
+    cursor.execute(query, (user_data[6],))
+    cart_items = cursor.fetchall()
+    print("cart items")
+    check_total_cost = True
+    check_quantity = True
+    print("order is true")
+    print(cart_items)
+    query = "SELECT balance FROM wallet WHERE wallet_id = %s"
+    cursor.execute(query, (user_data[7],))
+    wallet_balance = cursor.fetchone()
+    print(wallet_balance)
+    # Check product availability, wallet balance, and place order
+    total_order_cost = 0
+    for cart_item in cart_items:
+        product_id = cart_item[3]
+        product_quantity = cart_item[1]
+        query = "SELECT price, quantity FROM products WHERE product_id = %s AND is_available = 1"
+        cursor.execute(query, (product_id,))
+        product_details = cursor.fetchone()
+        print(product_details)
+        product_price = product_details[0]
+        available_quantity = product_details[1]
+        if available_quantity < product_quantity:
+            check_quantity = check_quantity and False
+        if(check_quantity):
+            order_cost = product_price * product_quantity
+            total_order_cost += order_cost
+    if(total_order_cost>wallet_balance[0]):
+        check_quantity = False
+    print(f'check_quantity {check_quantity}')
+    print(f'check_total_cost {check_total_cost}')
+    if(check_total_cost and check_quantity):
+        print("all checks passed")
+        for cart_item in cart_items:
+            print(cart_item)
+            product_id = cart_item[3]
+            product_quantity = cart_item[1]
+            query = "SELECT price, quantity FROM products WHERE product_id = %s AND is_available = 1"
+            cursor.execute(query, (product_id,))
+            product_details = cursor.fetchall()
+            print(product_details)
+            
+            if product_details:
+                print("in if")
+                product_price = product_details[0][0]
+                available_quantity = product_details[0][1]
+                order_cost = product_price * product_quantity
+                total_order_cost += order_cost
+                print("total order cost")
+                print(total_order_cost)
+                remaining_quantity = available_quantity - product_quantity
+                if remaining_quantity == 0:
+                    # Set product as unavailable if quantity becomes zero
+                    update_query = "UPDATE products SET is_available = 0 WHERE product_id = %s"
+                    cursor.execute(update_query, (product_id,))
+                    print("set to 0 , not available now")
+                else:
+                    update_query = "UPDATE products SET quantity = %s WHERE product_id = %s"
+                    cursor.execute(update_query, (remaining_quantity, product_id))
+                    print("product upated")
+                update_query = "UPDATE cart SET product_quantity = 0, product_id = 100000 WHERE cart_id = %s AND product_id = %s"
+                cursor.execute(update_query, (user_data[6], product_id))
+                print("deleted from cart")
+                # Add the order to the consists_of table
+                insert_query = "INSERT INTO consists_of (order_id, product_id, cart_id) VALUES (%s, %s, %s)"
+                cursor.execute(insert_query, (user_data[6], product_id, user_data[6]))
+                print("inserted into order placed table")
+    # Check wallet balance and place order if balance is sufficient
+        query = "SELECT balance FROM wallet WHERE wallet_id = %s"
+        cursor.execute(query, (user_data[7],))
+        wallet_balance = cursor.fetchone()[0]
 
-    cart_window.mainloop()
+        if wallet_balance >= total_order_cost:
+            # Update wallet balance
+            new_balance = wallet_balance - total_order_cost
+            update_wallet_query = "UPDATE wallet SET balance = %s WHERE wallet_id = %s"
+            cursor.execute(update_wallet_query, (new_balance, user_data[7]))
+            
+            # Commit the transaction
+            cnx.commit()
+            success_window = tk.Tk()
+            success_window.title("Order Placed")
+            success_label = tk.Label(success_window, text="Order Placed Successfully!")
+            success_label.pack()
+            ok_button = tk.Button(success_window, text="OK", command=success_window.destroy)
+            ok_button.pack()
+            success_window.mainloop()
+    elif ( check_quantity is False and check_total_cost is True):
+        error_window = tk.Tk()
+        error_window.title("Error")
+        error_label = tk.Label(error_window, text="Order cannot be processed due to unavailability of items or insufficient money")
+        error_label.pack()
+        ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
+        ok_button.pack()
+        error_window.mainloop()
+    elif ( check_quantity is True and check_total_cost is True):
+        error_window = tk.Tk()
+        error_window.title("Error")
+        error_label = tk.Label(error_window, text="Order cannot be processed due to insufficient wallet money")
+        error_label.pack()
+        ok_button = tk.Button(error_window, text="OK", command=error_window.destroy)
+        ok_button.pack()
+        error_window.mainloop()
 
-def open_wallet_window(user_data):
-    wallet_window = tk.Tk()
-    wallet_window.title("Wallet")
-    wallet_id = user_data[7]  # Assuming user_data contains the user_id
-    query1 = "SELECT * FROM WALLET WHERE wallet_id = %s"
-    cursor.execute(query1, (wallet_id,))
-    wallet_data = cursor.fetchone()
+def open_cart_window(user_data, consists_of_data):
+    product_counts = {}
+    total_price = 0
+
+    query = "SELECT * FROM cart WHERE cart_id = %s"
+    value = (user_data[6],)  # Note the comma to create a tuple with one element
+    cursor.execute(query, value)
+    tot_products = cursor.fetchall()
+    print(tot_products)
+    
+    product_window = tk.Tk()
+    product_window.title("Product Counts")
+    
+    heading_label = tk.Label(product_window, text="Product Counts")
+    heading_label.pack()
+
+    product_listbox = tk.Listbox(product_window)
+    
+    for product in tot_products:
+        product_id = product[3]
+        product_name = get_product_name(product_id, cursor)  # Assuming you have a function to retrieve product name
+        product_price = product[2]
+        product_quantity = product[1]
+        product_total_price = product_price * product_quantity
+        
+        product_listbox.insert(tk.END, f"{product_name}: {product_quantity} - Price: {product_total_price}")
+        total_price += product_total_price
+    
+    product_listbox.pack()
+
+    total_price_label = tk.Label(product_window, text=f"Total Price: {total_price}")
+    total_price_label.pack()
+
+    product_window.mainloop()
+
+def get_product_name(product_id, cursor):
+    query = "SELECT product_name FROM products WHERE product_id = %s"
+    cursor.execute(query, (product_id,))
+    result = cursor.fetchone()
+    return result[0] if result else "Unknown"
+def open_wallet_window(user_data, wallet_data):
+    wallet_window = tk.Toplevel()
+    wallet_window.title("Wallet Details")
+
+    user_wallet = None
+    for wallet in wallet_data:
+        if wallet[0] == user_data[7]:
+            user_wallet = wallet
+            break
+
+    if user_wallet is None:
+        label = tk.Label(wallet_window, text="Wallet not found.")
+        label.pack()
+    else:
+        label_id = tk.Label(wallet_window, text=f"Wallet ID: {user_wallet[0]}")
+        label_id.pack()
+        label_balance = tk.Label(wallet_window, text=f"Wallet Balance: {user_wallet[1]}")
+        label_balance.pack()
 
     wallet_window.mainloop()
 
-def open_discount_window(user_data):
+
+def open_discount_window(discount_offers_data):
     discount_window = tk.Tk()
-    discount_window.title("Discounts")
-    query1 = "SELECT * FROM DISCOUNT_AND_OFFERS"
-    cursor.execute(query1)
-    discount_data = cursor.fetchall()
-    return discount_data
+    discount_window.title("Discount Offers")
+
+    tk.Label(discount_window, text="Discount ID").grid(row=0, column=0, padx=5, pady=5)
+    tk.Label(discount_window, text="Description").grid(row=0, column=1, padx=5, pady=5)
+    tk.Label(discount_window, text="Discount Percentage").grid(row=0, column=2, padx=5, pady=5)
+
+    for idx, discount_offer in enumerate(discount_offers_data, start=1):
+        tk.Label(discount_window, text=discount_offer[0]).grid(row=idx, column=0, padx=5, pady=5)
+        tk.Label(discount_window, text=discount_offer[1]).grid(row=idx, column=1, padx=5, pady=5)
+        tk.Label(discount_window, text=discount_offer[2]).grid(row=idx, column=2, padx=5, pady=5)
+
+    discount_window.mainloop()
+
 
 def admin_login():
     login_window.destroy()
@@ -238,33 +397,33 @@ def getProducts():
         if(product[4]):#if that product is available
             products.append(product[1])
     return products
-
-def getProductsfull():
-    global product
-    products=[]
-    query = "SELECT * FROM PRODUCTS"
+def AddToCart(user_data, selected_item, consists_of_data):
+    query = "SELECT * FROM PRODUCTS WHERE is_available = 1"
     cursor.execute(query)
     tot_products = cursor.fetchall()
-    for product in tot_products:
-        if(product[4]):#if that product is available
-            products.append(product)
-    return product
+    print(user_data)
+    print(selected_item)
+    print(consists_of_data)
+    print(tot_products)
 
-def AddToCart(user_data,product_id,quantity):
-    query1 = "SELECT is_available,quantity FROM PRODUCTS WHERE PRODUCT_ID = %s"
-    cursor.execute(query1, (product_id,))
-    result = cursor.fetchone()
-    is_available,available_quantity = result
-    if is_available:
-        if available_quantity >= quantity:
-            query2="INSERT INTO CART (product_id,product_quantity,cost) VALUES (%s,%s,%s)"
-            cursor.execute(query2,(product_id,quantity,product[3]*quantity))
-            cnx.commit()
-            messagebox.showinfo("Success", "Product added to cart successfully!")
-        else:
-            messagebox.showerror("Error", "Quantity not available")
-    else:
-        messagebox.showerror("Error", "Product not available")
+    cart_id = user_data[6]
+    product_id = None
+    order_id = consists_of_data[len(consists_of_data)-1][0]+1
+
+    for product in tot_products:
+        if product[1] == selected_item:
+            product_id = product[0]
+            break
+
+    consists_of_data.append((order_id, product_id, cart_id))
+    insert_query = "INSERT INTO cart (cart_id , product_quantity, cost, product_id) VALUES (%s , %s, %s, %s)"
+    product_quantity = 1  
+    cost = product[3] 
+    values = (cart_id , product_quantity, cost, product_id)
+
+    cursor.execute(insert_query, values)
+    cnx.commit()
+
 def open_product_selection_window(user_data):
     product_window = tk.Tk()
     product_window.title("Product Selection")
@@ -272,15 +431,7 @@ def open_product_selection_window(user_data):
     def add_to_cart():
         selected_item = products_listbox.get(tk.ACTIVE)
         cart_listbox.insert(tk.END, selected_item)
-        products = getProductsfull()
-        cart_id = user_data[6] #get that particular cart_id of that user
-        for product in products:
-            if product[1] == selected_item:
-                fullproduct = product
-        getCartQuery = "SELECT * FROM CART WHERE CART_ID = cart_id"
-        cartInsertQuery = "INSERT INTO CART (product_quantity , cost , product_id) values (%s , %s , %s)"
-        # cursor.execute(cartInsertQuery  , )
-
+        AddToCart(user_data, selected_item, consists_of_data)
     
     products_label = tk.Label(product_window, text="Products:")
     products_label.grid(row=0, column=0, padx=5, pady=5)
@@ -289,19 +440,15 @@ def open_product_selection_window(user_data):
     for product in products:
         products_listbox.insert(tk.END, product)
     products_listbox.grid(row=1, column=0, padx=5, pady=5)
-    cart_id_ = user_data[6] #get that particular cart_id of that user
-    getCartQuery = "SELECT * FROM CART WHERE CART_ID = cart_id_"
-    cart_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
-    cart_listbox.grid(row=1, column=1, padx=5, pady=5)
-    cursor.execute(getCartQuery)
-    carts = cursor.fetchall()
-    cart_label = tk.Label(product_window, text="Cart:")
-    cart_label.grid(row=0, column=1, padx=5, pady=5)
-    for product in carts:
-        cart_listbox.insert(tk.END,product)
+
     add_button = tk.Button(product_window, text="Add to Cart", command=add_to_cart)
     add_button.grid(row=2, column=0, padx=5, pady=5)
 
+    cart_label = tk.Label(product_window, text="Cart:")
+    cart_label.grid(row=0, column=1, padx=5, pady=5)
+
+    cart_listbox = tk.Listbox(product_window, height=10, selectmode=tk.SINGLE)
+    cart_listbox.grid(row=1, column=1, padx=5, pady=5)
 
     product_window.mainloop()
 def register():
