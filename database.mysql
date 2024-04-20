@@ -1,4 +1,4 @@
-drop  database if exists dbms_project; 
+drop  database if exists dbms_project;
 create database dbms_project;
 use dbms_project;
 
@@ -46,8 +46,8 @@ values ("aahan","bike",100,false,"LC73 LE1964"),
 	("vihan", "auto", 103,false, "HK28 DF7079"),
 	("maya", "cycle", 100,false, "EM50 LM0082"),
 	("arjun", "jeep", 100,false, "CY10 TW6494");
-	
-	
+
+
 
 create table products (
     product_id INT primary key auto_increment,
@@ -77,7 +77,7 @@ insert into products(product_id , product_name,category,price,is_available,admin
 values (100000 ,null,null,0,null,101,1,null);
 
 create table inventory (
-	
+
     inventory_id int primary key auto_increment,
     need_for_supply bool  default false,
     check (need_for_supply in (true,false)),
@@ -87,7 +87,7 @@ create table inventory (
     product_id int,
     foreign key(admin_id) references admins(admin_id) on
     update cascade,
-    foreign key(product_id) references products(product_id) on 
+    foreign key(product_id) references products(product_id) on
     update cascade
 );
 
@@ -183,9 +183,9 @@ values ("30% off on whole cart",30,100),
         ("65% off on whole cart",65,103),
         ("70% off on whole cart",70,101),
         ("75% off on whole cart",75,102);
-        
-        
-        
+
+
+
 create table adds_discount(
 	is_active bool default false,
     	admin_id int,
@@ -271,9 +271,9 @@ create table consists_of (
     	order_id int,
     	product_id int,
     	cart_id int,
-	-- foreign key(order_id) references orders(order_id) on update cascade, 
-    foreign key(product_id) references products(product_id) on update cascade 
-    -- foreign key(cart_id) references cart(cart_id) on delete cascade 
+	-- foreign key(order_id) references orders(order_id) on update cascade,
+    foreign key(product_id) references products(product_id) on update cascade
+    -- foreign key(cart_id) references cart(cart_id) on delete cascade
 );
 
 
@@ -288,7 +288,7 @@ values (600,1,300),
         (607,8,307),
         (608,9,308),
         (609,10,309);
-        
+
 create table adminsadminswallet (
 	wallet_id int primary key auto_increment,
 	balance decimal(10,2) default 0,
@@ -331,7 +331,7 @@ create table customers (
     	wallet_id int,
 	foreign key(cart_id) references cart(cart_id) on update cascade on delete cascade ,
     foreign key(wallet_id) references wallet(wallet_id) on update cascade on delete cascade
-);	
+);
 
 alter table customers auto_increment=700;
 
@@ -373,7 +373,7 @@ values (current_date(),current_time(),700,600),
         (current_date(),current_time(),708,608),
         (current_date(),current_time(),709,609);
 	select * from customers;
-    
+
 
 
 DELIMITER $$
@@ -392,7 +392,7 @@ BEGIN
     SELECT balance INTO customer_wallet_balance
     FROM wallet
     WHERE wallet_id = (SELECT wallet_id FROM customers WHERE customer_id = order_customer_id);
-    
+
     -- If the wallet balance is less than the order amount, signal an error
     IF customer_wallet_balance < NEW.total_amount THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient wallet balance';
@@ -404,15 +404,15 @@ CREATE TRIGGER check_product_availability BEFORE INSERT ON consists_of
 FOR EACH ROW
 BEGIN
     DECLARE available_quantity INT;
-    
+
     -- Fetch the available quantity from inventory for the product
     SELECT Quantity INTO available_quantity
     FROM inventory
     WHERE product_id = NEW.product_id;
-    
+
     -- If requested quantity is more than available, signal an error
     IF available_quantity < (SELECT product_quantity FROM cart WHERE product_id = NEW.product_id AND cart_id = NEW.cart_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Product quantity exceeds availability';
     END IF;
 END$$
-DELIMITER ;
+DELIMITER;
