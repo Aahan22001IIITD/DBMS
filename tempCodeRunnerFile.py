@@ -4,6 +4,8 @@ from tkinter import messagebox
 from tkinter import ttk
 import threading
 import time
+
+
 cnx = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
@@ -459,7 +461,7 @@ def open_discount_window(discount_offers_data):
 
 
 def admin_login():
-    login_window.destroy()
+    # login_window.destroy()
     admin_login_window = tk.Tk()
     admin_login_window.title("Admin - Login")
 
@@ -599,7 +601,10 @@ def update_price(product_entry,new_price_entry,price_change):
     results=cursor.fetchone()
     if (results):
         query1="update products set price=%s where product_id=%s"
+        cursor.execute("BEGIN;")
         cursor.execute(query1,(new_price,product_id))
+        cursor.execute("COMMIT;")
+        # cnx.commit()
         messagebox.showinfo("Success","The price have been updated")
         price_change.destroy()
     else:
@@ -722,17 +727,33 @@ def REMOVE_from_cart(user_data,item,products_listbox):
             product_row=row
             break
 
+    query1="select * from cart_products where product_id=%s and cart_id=%s"
+    cursor.execute(query1,(product_row[0],user_data[6]))
+    result=cursor.fetchone()
+
+    quantity=result[1]
+    query2="select * from products where product_id=%s"
+    cursor.execute(query2,(product_row[0],))
+    result1=cursor.fetchone()
+    
+    query3="update products set is_available=%s, quantity=%s where product_id=%s"
+    cursor.execute(query3,(1,result1[6]+quantity,product_row[0]))
+    cnx.commit()
+    
+
     query_cart_product="delete from cart_products where cart_id=%s and product_id=%s"
     cursor.execute(query_cart_product,(user_data[6],product_row[0]))
-    # cnx.commit()
-    flag=True
-    for idx in range(products_listbox.size()):
-        if (products_listbox.get(idx)==item):
-            flag=False
+    cnx.commit()
+
+
+    # flag=True
+    # for idx in range(products_listbox.size()):
+    #     if (products_listbox.get(idx)==item):
+    #         flag=False
     
-    if (flag):
-        cnx.rollback()
-        products_listbox.insert(tk.END,item)
+    # if (flag):
+    #     cnx.rollback()
+    #     products_listbox.insert(tk.END,item)
 
     
 
